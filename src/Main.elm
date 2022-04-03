@@ -154,6 +154,14 @@ meshView camera viewport pcb pcbMesh switchMesh =
         switchEntity =
             Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switchMesh (Scene3d.Mesh.shadow switchMesh)
 
+        table =
+            Scene3d.quadWithShadow
+                (Scene3d.Material.matte <| Color.rgb255 201 211 223)
+                (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
+                (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
+                (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
+                (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
+
         entities =
             Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcbMesh (Scene3d.Mesh.shadow pcbMesh)
                 :: List.map
@@ -173,7 +181,7 @@ meshView camera viewport pcb pcbMesh switchMesh =
         , dimensions = ( viewport.width, Pixels.int 1200 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
-        , entities = entities
+        , entities = table :: entities
         }
 
 

@@ -52,7 +52,7 @@ load pcb assets msg =
     case pcb of
         CorneClassic ->
             Http.get
-                { url = assets.pcbs.corneClassic
+                { url = assets.pcbs.corneClassic.mesh
                 , expect = Obj.Decode.expectObj (msg pcb) Length.meters Mesh.decoder
                 }
 

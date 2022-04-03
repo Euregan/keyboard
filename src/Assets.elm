@@ -3,7 +3,10 @@ module Assets exposing (..)
 
 type alias Assets =
     { pcbs :
-        { corneClassic : String
+        { corneClassic :
+            { mesh : String
+            , texture : String
+            }
         }
     , switches :
         { cherryMx : String
