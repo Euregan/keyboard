@@ -3,6 +3,7 @@ module Main exposing (main)
 import Angle exposing (Angle)
 import Array
 import Assets exposing (Assets)
+import Axis3d
 import BoundingBox3d exposing (BoundingBox3d)
 import Browser
 import Browser.Dom
@@ -87,6 +88,8 @@ init flags =
                 Browser.Dom.getViewport
     in
     ( { azimuth = Angle.degrees 90
+
+      -- , elevation = Angle.degrees 180
       , elevation = Angle.degrees -45
       , zoom = 0
       , viewport =
@@ -145,67 +148,26 @@ sphere =
         (Sphere3d.atPoint (Point3d.centimeters 1 2 1) (Length.centimeters 3))
 
 
-meshView : Camera3d Meters ObjCoordinates -> Viewport -> Mesh -> Mesh -> Html Msg
-meshView camera viewport pcb switch =
+meshView : Camera3d Meters ObjCoordinates -> Viewport -> Pcb -> Mesh -> Mesh -> Html Msg
+meshView camera viewport pcb pcbMesh switchMesh =
     let
-        switchMesh =
-            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switch (Scene3d.Mesh.shadow switch)
+        switchEntity =
+            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switchMesh (Scene3d.Mesh.shadow switchMesh)
 
         entities =
-            [ Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcb (Scene3d.Mesh.shadow pcb)
-            , switchMesh
-            , Scene3d.translateIn Direction3d.z (Length.centimeters 1.9) switchMesh
-            , Scene3d.translateIn Direction3d.z (Length.centimeters -1.9) switchMesh
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 5.7)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters 1.5)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 5.7)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -0.4)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 5.7)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -2.3)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters 1.5)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -0.4)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -2.3)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters 1.7)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -0.2)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters 1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -2.1)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters 1.7)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -0.2)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -1.9)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -2.1)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters 1.5)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -0.4)
-            , switchMesh
-                |> Scene3d.translateIn Direction3d.x (Length.centimeters -3.8)
-                |> Scene3d.translateIn Direction3d.z (Length.centimeters -2.3)
-            ]
+            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcbMesh (Scene3d.Mesh.shadow pcbMesh)
+                :: List.map
+                    (\( vector, angle ) ->
+                        Scene3d.rotateAround Axis3d.y angle switchEntity
+                            |> Scene3d.translateBy vector
+                    )
+                    (Pcb.switchPositions pcb)
     in
     Scene3d.sunny
         { upDirection = Direction3d.z
         , sunlightDirection = Direction3d.xyZ (Angle.degrees -135) (Angle.degrees -20)
+
+        -- , sunlightDirection = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -20)
         , shadows = True
         , camera = camera
         , dimensions = ( viewport.width, Pixels.int 1200 )
@@ -261,6 +223,7 @@ view model =
                         in
                         meshView camera
                             model.viewport
+                            pcb
                             pcbMesh
                             switchMesh
 
