@@ -6,7 +6,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Http
 import Length exposing (Meters)
 import LoadState exposing (LoadState(..))
-import Mesh exposing (MeshWithBoundingBox)
+import Mesh exposing (Mesh)
 import Obj.Decode exposing (ObjCoordinates)
 import Vector3d exposing (Vector3d)
 
@@ -16,7 +16,7 @@ type Pcb
 
 
 type alias Pcbs =
-    { corneClassic : LoadState MeshWithBoundingBox
+    { corneClassic : LoadState Mesh
     }
 
 
@@ -32,7 +32,7 @@ init =
     { corneClassic = Pending }
 
 
-setMesh : Pcbs -> Pcb -> LoadState MeshWithBoundingBox -> Pcbs
+setMesh : Pcbs -> Pcb -> LoadState Mesh -> Pcbs
 setMesh pcbs pcb newMesh =
     case pcb of
         CorneClassic ->
@@ -44,7 +44,7 @@ load :
     -> Assets
     ->
         (Pcb
-         -> Result Http.Error MeshWithBoundingBox
+         -> Result Http.Error Mesh
          -> msg
         )
     -> Cmd msg
@@ -57,7 +57,7 @@ load pcb assets msg =
                 }
 
 
-mesh : Pcbs -> Pcb -> LoadState MeshWithBoundingBox
+mesh : Pcbs -> Pcb -> LoadState Mesh
 mesh pcbs pcb =
     case pcb of
         CorneClassic ->

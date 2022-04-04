@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Angle exposing (Angle)
+import Animation exposing (State)
 import Array
 import Assets exposing (Assets)
 import Axis3d
@@ -11,6 +12,8 @@ import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Direction3d
+import Display exposing (Display(..))
+import Duration exposing (Duration)
 import Html exposing (Attribute, Html)
 import Html.Attributes
 import Html.Events
@@ -24,6 +27,7 @@ import Obj.Decode exposing (Decoder, ObjCoordinates)
 import Pcb exposing (Pcb(..), Pcbs)
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
+import Position
 import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Material exposing (Texture)
@@ -33,6 +37,7 @@ import Sphere3d
 import Switch exposing (Switch(..), Switches)
 import Task
 import TriangularMesh exposing (TriangularMesh)
+import Vector3d
 import Viewpoint3d
 import WebGL.Texture exposing (Error(..))
 
@@ -51,14 +56,16 @@ type alias Model =
     , assets : Assets
     , pcbMeshes : Pcbs
     , switchMeshes : Switches
-    , displayed : DisplayedSelection
+    , selected : DisplayedSelection
+    , displayed : Display
     }
 
 
 type Msg
     = Resize (Quantity Int Pixels) (Quantity Int Pixels)
-    | LoadedPcb Pcb (Result Http.Error ( Mesh, BoundingBox3d Meters ObjCoordinates ))
-    | LoadedSwitch Switch (Result Http.Error ( Mesh, BoundingBox3d Meters ObjCoordinates ))
+    | LoadedPcb Pcb (Result Http.Error Mesh)
+    | LoadedSwitch Switch (Result Http.Error Mesh)
+    | Tick Duration
 
 
 main : Program Flags Model Msg
@@ -99,7 +106,8 @@ init flags =
       , assets = flags
       , pcbMeshes = Pcb.init
       , switchMeshes = Switch.init
-      , displayed = SwitchSelected Corne CorneClassic CherryMx
+      , selected = SwitchSelected Corne CorneClassic CherryMx
+      , displayed = Display.init CorneClassic
       }
     , Cmd.batch
         [ getViewport
@@ -112,7 +120,9 @@ init flags =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height)) ]
+        [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
+        , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -141,6 +151,18 @@ update msg model =
         Resize width height ->
             ( { model | viewport = { width = width, height = height } }, Cmd.none )
 
+        Tick delta ->
+            case ( model.pcbMeshes.corneClassic, model.switchMeshes.cherryMx ) of
+                ( Loaded _, Loaded _ ) ->
+                    ( { model
+                        | displayed = Display.update (Duration.inMilliseconds delta) model.displayed
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 sphere =
     Scene3d.sphereWithShadow
@@ -148,22 +170,34 @@ sphere =
         (Sphere3d.atPoint (Point3d.centimeters 1 2 1) (Length.centimeters 3))
 
 
-meshView : Camera3d Meters ObjCoordinates -> Viewport -> Pcb -> Mesh -> Mesh -> Html Msg
-meshView camera viewport pcb pcbMesh switchMesh =
+meshView : Camera3d Meters ObjCoordinates -> Viewport -> Pcb -> Mesh -> Mesh -> Display -> Html Msg
+meshView camera viewport pcb pcbMesh switchMesh displayed =
     let
         switchEntity =
-            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switchMesh (Scene3d.Mesh.shadow switchMesh)
+            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switchMesh.mesh (Scene3d.Mesh.shadow switchMesh.mesh)
 
-        table =
+        tableEntity =
             Scene3d.quadWithShadow
-                (Scene3d.Material.matte <| Color.rgb255 201 211 223)
+                (Scene3d.Material.matte <| Color.rgb255 224 234 242)
                 (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
                 (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
                 (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
                 (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
 
+        pcbEntity =
+            let
+                { x, y, z } =
+                    case displayed of
+                        Idle dis ->
+                            Animation.position dis.pcb.state
+                                |> Position.toRecord
+            in
+            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcbMesh.mesh (Scene3d.Mesh.shadow pcbMesh.mesh)
+                |> Scene3d.translateBy (Vector3d.centimeters x y z)
+
         entities =
-            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcbMesh (Scene3d.Mesh.shadow pcbMesh)
+            tableEntity
+                :: pcbEntity
                 :: List.map
                     (\( vector, angle ) ->
                         Scene3d.rotateAround Axis3d.y angle switchEntity
@@ -181,7 +215,7 @@ meshView camera viewport pcb pcbMesh switchMesh =
         , dimensions = ( viewport.width, Pixels.int 1200 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
-        , entities = table :: entities
+        , entities = entities
         }
 
 
@@ -194,7 +228,7 @@ view model =
         , Html.Attributes.style "width" "100%"
         , Html.Attributes.style "height" "100%"
         ]
-        [ case model.displayed of
+        [ case model.selected of
             Empty ->
                 Html.text "Select a keyboard"
 
@@ -206,10 +240,10 @@ view model =
 
             SwitchSelected keyoard pcb switch ->
                 case ( Pcb.mesh model.pcbMeshes pcb, Switch.mesh model.switchMeshes switch ) of
-                    ( Loaded ( pcbMesh, boundingBox ), Loaded ( switchMesh, _ ) ) ->
+                    ( Loaded pcbMesh, Loaded switchMesh ) ->
                         let
                             { minX, maxX, minY, maxY, minZ, maxZ } =
-                                BoundingBox3d.extrema boundingBox
+                                BoundingBox3d.extrema pcbMesh.boundingBox
 
                             distance =
                                 List.map Quantity.abs [ minX, maxX, minY, maxY, minZ, maxZ ]
@@ -221,7 +255,7 @@ view model =
                                 Camera3d.perspective
                                     { viewpoint =
                                         Viewpoint3d.orbitZ
-                                            { focalPoint = BoundingBox3d.centerPoint boundingBox
+                                            { focalPoint = BoundingBox3d.centerPoint pcbMesh.boundingBox
                                             , azimuth = model.azimuth
                                             , elevation = model.elevation
                                             , distance = distance
@@ -234,8 +268,9 @@ view model =
                             pcb
                             pcbMesh
                             switchMesh
+                            model.displayed
 
                     _ ->
                         Html.text "Loading"
-        , Selector.view model.displayed
+        , Selector.view model.selected
         ]

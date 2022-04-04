@@ -5,7 +5,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Http
 import Length exposing (Meters)
 import LoadState exposing (LoadState(..))
-import Mesh exposing (MeshWithBoundingBox)
+import Mesh exposing (Mesh)
 import Obj.Decode exposing (ObjCoordinates)
 
 
@@ -14,7 +14,7 @@ type Switch
 
 
 type alias Switches =
-    { cherryMx : LoadState MeshWithBoundingBox
+    { cherryMx : LoadState Mesh
     }
 
 
@@ -30,7 +30,7 @@ init =
     { cherryMx = Pending }
 
 
-setMesh : Switches -> Switch -> LoadState MeshWithBoundingBox -> Switches
+setMesh : Switches -> Switch -> LoadState Mesh -> Switches
 setMesh switches switch newMesh =
     case switch of
         CherryMx ->
@@ -42,7 +42,7 @@ load :
     -> Assets
     ->
         (Switch
-         -> Result Http.Error MeshWithBoundingBox
+         -> Result Http.Error Mesh
          -> msg
         )
     -> Cmd msg
@@ -55,7 +55,7 @@ load switch assets msg =
                 }
 
 
-mesh : Switches -> Switch -> LoadState MeshWithBoundingBox
+mesh : Switches -> Switch -> LoadState Mesh
 mesh switches switch =
     case switch of
         CherryMx ->
