@@ -12,7 +12,7 @@ import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Direction3d
-import Display exposing (Display(..))
+import Display exposing (Display(..), Viewport)
 import Duration exposing (Duration)
 import Html exposing (Attribute, Html)
 import Html.Attributes
@@ -42,17 +42,8 @@ import Viewpoint3d
 import WebGL.Texture exposing (Error(..))
 
 
-type alias Viewport =
-    { width : Quantity Int Pixels
-    , height : Quantity Int Pixels
-    }
-
-
 type alias Model =
-    { azimuth : Angle
-    , elevation : Angle
-    , zoom : Float
-    , viewport : Viewport
+    { viewport : Viewport
     , assets : Assets
     , pcbMeshes : Pcbs
     , switchMeshes : Switches
@@ -94,12 +85,7 @@ init flags =
                 )
                 Browser.Dom.getViewport
     in
-    ( { azimuth = Angle.degrees 90
-
-      -- , elevation = Angle.degrees 180
-      , elevation = Angle.degrees -45
-      , zoom = 0
-      , viewport =
+    ( { viewport =
             { width = Quantity.zero
             , height = Quantity.zero
             }
@@ -172,59 +158,6 @@ areMeshesLoaded pcbs switches =
             False
 
 
-sphere =
-    Scene3d.sphereWithShadow
-        (Scene3d.Material.matte Color.blue)
-        (Sphere3d.atPoint (Point3d.centimeters 1 2 1) (Length.centimeters 3))
-
-
-tableMesh =
-    Scene3d.quadWithShadow
-        (Scene3d.Material.matte <| Color.rgb255 224 234 242)
-        (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
-        (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
-        (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
-        (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
-
-
-meshView : Camera3d Meters ObjCoordinates -> Viewport -> Pcb -> Mesh -> Mesh -> Display -> Html Msg
-meshView camera viewport pcb pcbMesh switchMesh displayed =
-    let
-        placedPcbMesh =
-            let
-                { x, y, z } =
-                    case displayed of
-                        Idle dis ->
-                            Animation.position dis.pcb.state
-                                |> Position.toRecord
-            in
-            pcbMesh.mesh
-                |> Scene3d.translateBy (Vector3d.centimeters x y z)
-
-        entities =
-            tableMesh
-                :: placedPcbMesh
-                :: List.map
-                    (\( vector, angle ) ->
-                        Scene3d.rotateAround Axis3d.y angle switchMesh.mesh
-                            |> Scene3d.translateBy vector
-                    )
-                    (Pcb.switchPositions pcb)
-    in
-    Scene3d.sunny
-        { upDirection = Direction3d.z
-        , sunlightDirection = Direction3d.xyZ (Angle.degrees -135) (Angle.degrees -20)
-
-        -- , sunlightDirection = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -20)
-        , shadows = True
-        , camera = camera
-        , dimensions = ( viewport.width, Pixels.int 1200 )
-        , background = Scene3d.transparentBackground
-        , clipDepth = Length.meters 0.1
-        , entities = entities
-        }
-
-
 view : Model -> Html Msg
 view model =
     Html.main_
@@ -245,38 +178,11 @@ view model =
                 Html.text "Select a switch"
 
             SwitchSelected keyoard pcb switch ->
-                case ( Pcb.mesh model.pcbMeshes pcb, Switch.mesh model.switchMeshes switch ) of
-                    ( Loaded pcbMesh, Loaded switchMesh ) ->
-                        let
-                            { minX, maxX, minY, maxY, minZ, maxZ } =
-                                BoundingBox3d.extrema pcbMesh.boundingBox
-
-                            distance =
-                                List.map Quantity.abs [ minX, maxX, minY, maxY, minZ, maxZ ]
-                                    |> List.foldl Quantity.max Quantity.zero
-                                    |> Quantity.multiplyBy 2
-                                    |> Quantity.multiplyBy (2 - model.zoom)
-
-                            camera =
-                                Camera3d.perspective
-                                    { viewpoint =
-                                        Viewpoint3d.orbitZ
-                                            { focalPoint = BoundingBox3d.centerPoint pcbMesh.boundingBox
-                                            , azimuth = model.azimuth
-                                            , elevation = model.elevation
-                                            , distance = distance
-                                            }
-                                    , verticalFieldOfView = Angle.degrees 30
-                                    }
-                        in
-                        meshView camera
-                            model.viewport
-                            pcb
-                            pcbMesh
-                            switchMesh
-                            model.displayed
-
-                    _ ->
-                        Html.text "Loading"
+                Display.view
+                    model.viewport
+                    pcb
+                    (Pcb.mesh model.pcbMeshes pcb)
+                    (Switch.mesh model.switchMeshes switch)
+                    model.displayed
         , Selector.view model.selected
         ]
