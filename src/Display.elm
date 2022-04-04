@@ -22,9 +22,9 @@ init pcb =
     let
         pcbAnimation =
             Animation.start
-                (Animation.init (Position.new 0 2 0) (Angle.degrees 0))
-                0
-                5000
+                (Animation.init (Position.new 0 25 0) (Angle.degrees 0))
+                200
+                500
                 (Position.new 0 0 0)
                 (Angle.degrees 0)
     in

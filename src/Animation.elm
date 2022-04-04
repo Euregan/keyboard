@@ -84,7 +84,7 @@ update delta state =
                             0
 
                         else
-                            elapsed / animation.duration
+                            (elapsed - animation.delay) / animation.duration
 
                     relative fromValue toValue =
                         (toValue - fromValue) * sqrt ((cos (percentTraveled * pi - pi) + 1) / 2)

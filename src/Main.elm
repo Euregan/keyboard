@@ -119,10 +119,14 @@ init flags =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
-        , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
-        ]
+    if areMeshesLoaded model.pcbMeshes model.switchMeshes then
+        Sub.batch
+            [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
+            , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
+            ]
+
+    else
+        Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -152,16 +156,20 @@ update msg model =
             ( { model | viewport = { width = width, height = height } }, Cmd.none )
 
         Tick delta ->
-            case ( model.pcbMeshes.corneClassic, model.switchMeshes.cherryMx ) of
-                ( Loaded _, Loaded _ ) ->
-                    ( { model
-                        | displayed = Display.update (Duration.inMilliseconds delta) model.displayed
-                      }
-                    , Cmd.none
-                    )
+            ( { model
+                | displayed = Display.update (Duration.inMilliseconds delta) model.displayed
+              }
+            , Cmd.none
+            )
 
-                _ ->
-                    ( model, Cmd.none )
+
+areMeshesLoaded pcbs switches =
+    case ( pcbs.corneClassic, switches.cherryMx ) of
+        ( Loaded _, Loaded _ ) ->
+            True
+
+        _ ->
+            False
 
 
 sphere =
