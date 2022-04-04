@@ -24,7 +24,7 @@ init pcb =
             Animation.start
                 (Animation.init (Position.new 0 2 0) (Angle.degrees 0))
                 0
-                15000
+                5000
                 (Position.new 0 0 0)
                 (Angle.degrees 0)
     in

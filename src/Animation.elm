@@ -80,7 +80,7 @@ update delta state =
                         animation.elapsed + delta
 
                     percentTraveled =
-                        if animation.delay < elapsed then
+                        if animation.delay > elapsed then
                             0
 
                         else

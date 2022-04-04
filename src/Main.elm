@@ -170,21 +170,19 @@ sphere =
         (Sphere3d.atPoint (Point3d.centimeters 1 2 1) (Length.centimeters 3))
 
 
+tableMesh =
+    Scene3d.quadWithShadow
+        (Scene3d.Material.matte <| Color.rgb255 224 234 242)
+        (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
+        (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
+        (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
+        (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
+
+
 meshView : Camera3d Meters ObjCoordinates -> Viewport -> Pcb -> Mesh -> Mesh -> Display -> Html Msg
 meshView camera viewport pcb pcbMesh switchMesh displayed =
     let
-        switchEntity =
-            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) switchMesh.mesh (Scene3d.Mesh.shadow switchMesh.mesh)
-
-        tableEntity =
-            Scene3d.quadWithShadow
-                (Scene3d.Material.matte <| Color.rgb255 224 234 242)
-                (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
-                (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
-                (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
-                (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
-
-        pcbEntity =
+        placedPcbMesh =
             let
                 { x, y, z } =
                     case displayed of
@@ -192,15 +190,15 @@ meshView camera viewport pcb pcbMesh switchMesh displayed =
                             Animation.position dis.pcb.state
                                 |> Position.toRecord
             in
-            Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) pcbMesh.mesh (Scene3d.Mesh.shadow pcbMesh.mesh)
+            pcbMesh.mesh
                 |> Scene3d.translateBy (Vector3d.centimeters x y z)
 
         entities =
-            tableEntity
-                :: pcbEntity
+            tableMesh
+                :: placedPcbMesh
                 :: List.map
                     (\( vector, angle ) ->
-                        Scene3d.rotateAround Axis3d.y angle switchEntity
+                        Scene3d.rotateAround Axis3d.y angle switchMesh.mesh
                             |> Scene3d.translateBy vector
                     )
                     (Pcb.switchPositions pcb)

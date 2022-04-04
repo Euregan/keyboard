@@ -4,17 +4,19 @@ import Angle
 import Animation
 import Array
 import BoundingBox3d exposing (BoundingBox3d)
+import Color
 import Length exposing (Meters)
 import Obj.Decode exposing (Decoder, ObjCoordinates)
 import Point3d exposing (Point3d)
 import Position
+import Scene3d exposing (Entity)
+import Scene3d.Material
 import Scene3d.Mesh exposing (Textured)
 import TriangularMesh exposing (TriangularMesh)
 
 
 type alias Mesh =
-    { aimation : Animation.State
-    , mesh : Textured ObjCoordinates
+    { mesh : Entity ObjCoordinates
     , boundingBox : BoundingBox3d Meters ObjCoordinates
     }
 
@@ -35,9 +37,12 @@ withBoundingBox :
 withBoundingBox getPosition createMesh =
     Obj.Decode.map
         (\triangularMesh ->
+            let
+                mesh =
+                    createMesh triangularMesh
+            in
             Mesh
-                (Animation.start (Animation.init (Position.new 0 0 0) (Angle.degrees 0)) 0 350 (Position.new 0 0 0) (Angle.degrees 0))
-                (createMesh triangularMesh)
+                (Scene3d.meshWithShadow (Scene3d.Material.matte Color.blue) mesh (Scene3d.Mesh.shadow mesh))
                 (case List.map getPosition (Array.toList (TriangularMesh.vertices triangularMesh)) of
                     first :: rest ->
                         BoundingBox3d.hull first rest
