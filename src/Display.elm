@@ -30,7 +30,7 @@ type Display
             { state : State
             , pcb : Pcb
             }
-        , switches : List ( State, Switch )
+        , switches : List { state : State, switch : Switch }
         }
 
 
@@ -50,13 +50,29 @@ init pcb =
                 500
                 (Position.new 0 0 0)
                 (Angle.degrees 0)
+
+        switchesAnimation =
+            List.map
+                (\( position, rotation ) ->
+                    { state =
+                        Animation.startAfter
+                            pcbAnimation
+                            (Animation.init (Position.new 0 25 0) rotation)
+                            200
+                            500
+                            position
+                            rotation
+                    , switch = Switch.CherryMx
+                    }
+                )
+                (Pcb.switchPositions pcb)
     in
     Idle
         { pcb =
             { state = pcbAnimation
             , pcb = pcb
             }
-        , switches = []
+        , switches = switchesAnimation
         }
 
 
@@ -69,7 +85,12 @@ update delta display =
                     { state = Animation.update delta pcb.state
                     , pcb = pcb.pcb
                     }
-                , switches = switches
+                , switches =
+                    List.map
+                        (\switch ->
+                            { switch | state = Animation.update delta switch.state }
+                        )
+                        switches
                 }
 
 
@@ -128,17 +149,28 @@ view viewport pcb pcbResource switchResource displayed =
             pcbMesh.mesh
                 |> Scene3d.translateBy (Vector3d.centimeters x y z)
 
+        placeSwitchMeshes switchMesh =
+            case displayed of
+                Idle dis ->
+                    List.map
+                        (\{ state } ->
+                            let
+                                { x, y, z } =
+                                    Animation.position state
+                                        |> Position.toRecord
+                            in
+                            switchMesh.mesh
+                                |> Scene3d.rotateAround Axis3d.y (Animation.rotation state)
+                                |> Scene3d.translateBy (Vector3d.centimeters x y z)
+                        )
+                        dis.switches
+
         entities =
             case ( pcbResource, switchResource ) of
                 ( Loaded pcbMesh, Loaded switchMesh ) ->
                     tableMesh
                         :: placePcbMesh pcbMesh
-                        :: List.map
-                            (\( vector, angle ) ->
-                                Scene3d.rotateAround Axis3d.y angle switchMesh.mesh
-                                    |> Scene3d.translateBy vector
-                            )
-                            (Pcb.switchPositions pcb)
+                        :: placeSwitchMeshes switchMesh
 
                 ( Loaded pcbMesh, Pending ) ->
                     [ tableMesh

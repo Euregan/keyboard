@@ -1,4 +1,4 @@
-module Animation exposing (State, angle, init, position, start, update)
+module Animation exposing (State, init, position, rotation, start, startAfter, update)
 
 import Angle exposing (Angle)
 import Position exposing (Position)
@@ -22,12 +22,12 @@ type alias Animation =
 
 
 init : Position -> Angle -> State
-init to rotation =
-    Idle to rotation
+init to angle =
+    Idle to angle
 
 
-start : State -> Float -> Float -> Position -> Angle -> State
-start state delay duration to rotation =
+start : State -> Float -> Float -> Position -> Rotation -> State
+start state delay duration to angle =
     -- We avoid starting a new animation if it's not necessary
     if position state == to then
         state
@@ -40,8 +40,39 @@ start state delay duration to rotation =
             , from = position state
             , to = to
             , position = position state
-            , rotation = rotation
+            , rotation = angle
             }
+
+
+startAfter : State -> State -> Float -> Float -> Position -> Angle -> State
+startAfter afterState previousState delay duration to angle =
+    -- We avoid starting a new animation if it's not necessary
+    if position previousState == to then
+        previousState
+
+    else
+        case afterState of
+            Idle _ _ ->
+                Moving
+                    { duration = duration
+                    , delay = delay
+                    , elapsed = 0
+                    , from = position previousState
+                    , to = to
+                    , position = position previousState
+                    , rotation = angle
+                    }
+
+            Moving animation ->
+                Moving
+                    { duration = duration
+                    , delay = (animation.duration + animation.delay - animation.elapsed) + delay
+                    , elapsed = 0
+                    , from = position previousState
+                    , to = to
+                    , position = position previousState
+                    , rotation = angle
+                    }
 
 
 position : State -> Position
@@ -54,11 +85,11 @@ position state =
             animation.position
 
 
-angle : State -> Angle
-angle state =
+rotation : State -> Rotation
+rotation state =
     case state of
-        Idle _ rotation ->
-            rotation
+        Idle _ angle ->
+            angle
 
         Moving animation ->
             animation.rotation
@@ -67,8 +98,8 @@ angle state =
 update : Float -> State -> State
 update delta state =
     case state of
-        Idle pos rotation ->
-            Idle pos rotation
+        Idle pos angle ->
+            Idle pos angle
 
         Moving animation ->
             if delta + animation.elapsed >= animation.duration + animation.delay then
