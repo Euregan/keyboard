@@ -167,12 +167,7 @@ areMeshesLoaded pcbs switches =
 view : Model -> Html Msg
 view model =
     Html.main_
-        [ Html.Attributes.style "position" "absolute"
-        , Html.Attributes.style "left" "0"
-        , Html.Attributes.style "top" "0"
-        , Html.Attributes.style "width" "100%"
-        , Html.Attributes.style "height" "100%"
-        ]
+        [ Html.Attributes.style "overflow" "hidden" ]
         [ case model.selected of
             Empty ->
                 Html.text "Select a keyboard"
