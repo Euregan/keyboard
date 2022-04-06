@@ -17,6 +17,7 @@ import Pixels exposing (Pixels)
 import Point3d
 import Position
 import Quantity exposing (Quantity)
+import Random exposing (Seed)
 import Scene3d
 import Scene3d.Material
 import Switch exposing (Switch)
@@ -40,9 +41,12 @@ type alias Viewport =
     }
 
 
-init : Pcb -> Display
-init pcb =
+init : Pcb -> Seed -> ( Display, Seed )
+init pcb seed =
     let
+        switchDelayGenerator =
+            Random.float -100 100
+
         pcbAnimation =
             Animation.start
                 (Animation.init (Position.new 0 25 0) (Angle.degrees 0))
@@ -51,29 +55,39 @@ init pcb =
                 (Position.new 0 0 0)
                 (Angle.degrees 0)
 
-        switchesAnimation =
-            List.map
-                (\( position, rotation ) ->
-                    { state =
-                        Animation.startAfter
-                            pcbAnimation
-                            (Animation.init (Position.new 0 25 0) rotation)
-                            200
-                            500
-                            position
-                            rotation
-                    , switch = Switch.CherryMx
-                    }
+        ( switchesAnimation, newSeed ) =
+            List.foldl
+                (\( position, rotation ) ( animations, previousSeed ) ->
+                    let
+                        ( delay, seedAfterDelay ) =
+                            Random.step switchDelayGenerator previousSeed
+                    in
+                    ( { state =
+                            Animation.startAfter
+                                pcbAnimation
+                                (Animation.init (Position.new 0 25 0) rotation)
+                                (delay + 200)
+                                500
+                                position
+                                rotation
+                      , switch = Switch.CherryMx
+                      }
+                        :: animations
+                    , seedAfterDelay
+                    )
                 )
+                ( [], seed )
                 (Pcb.switchPositions pcb)
     in
-    Idle
+    ( Idle
         { pcb =
             { state = pcbAnimation
             , pcb = pcb
             }
         , switches = switchesAnimation
         }
+    , newSeed
+    )
 
 
 update : Float -> Display -> Display

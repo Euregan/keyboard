@@ -20,9 +20,9 @@ translateZ position amount =
     translateBy position <| Point3d.centimeters 0 0 amount
 
 
-translateBy : Position -> Point3d Meters WorldCoordinates -> Point3d Meters WorldCoordinates
-translateBy position point =
-    Point3d.translateBy (Vector3d.fromRecord Length.meters (Point3d.toMeters position)) point
+translateBy : Position -> Position -> Position
+translateBy positionA positionB =
+    Point3d.translateBy (Vector3d.fromRecord Length.meters (Point3d.toMeters positionA)) positionB
 
 
 toRecord : Position -> { x : Float, y : Float, z : Float }

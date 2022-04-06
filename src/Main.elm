@@ -29,6 +29,7 @@ import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Position
 import Quantity exposing (Quantity)
+import Random exposing (Seed)
 import Scene3d
 import Scene3d.Material exposing (Texture)
 import Scene3d.Mesh exposing (Textured, Uniform)
@@ -49,6 +50,7 @@ type alias Model =
     , switchMeshes : Switches
     , selected : DisplayedSelection
     , displayed : Display
+    , seed : Seed
     }
 
 
@@ -84,6 +86,9 @@ init flags =
                         (Pixels.int (round viewport.height))
                 )
                 Browser.Dom.getViewport
+
+        ( display, seed ) =
+            Display.init CorneClassic (Random.initialSeed 42)
     in
     ( { viewport =
             { width = Quantity.zero
@@ -93,7 +98,8 @@ init flags =
       , pcbMeshes = Pcb.init
       , switchMeshes = Switch.init
       , selected = SwitchSelected Corne CorneClassic CherryMx
-      , displayed = Display.init CorneClassic
+      , displayed = display
+      , seed = seed
       }
     , Cmd.batch
         [ getViewport
