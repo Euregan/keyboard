@@ -107,6 +107,9 @@ update delta state =
 
             else
                 let
+                    easeOut x =
+                        1 - ((1 - x) ^ 3)
+
                     elapsed =
                         animation.elapsed + delta
 
@@ -118,10 +121,7 @@ update delta state =
                             (elapsed - animation.delay) / animation.duration
 
                     relative fromValue toValue =
-                        (toValue - fromValue) * sqrt ((cos (percentTraveled * pi - pi) + 1) / 2)
-
-                    relativeZ fromValue toValue =
-                        (toValue - fromValue) * (((cos (percentTraveled * (pi / 0.6964) - pi) + 1) / 1.2) ^ (1 / 4))
+                        (toValue - fromValue) * easeOut percentTraveled
 
                     from =
                         Position.toRecord animation.from
@@ -132,5 +132,5 @@ update delta state =
                 Moving
                     { animation
                         | elapsed = elapsed
-                        , position = Position.new (from.x + relative from.x to.x) (from.y + relative from.y to.y) (from.z + relativeZ from.z to.z)
+                        , position = Position.new (from.x + relative from.x to.x) (from.y + relative from.y to.y) (from.z + relative from.z to.z)
                     }
