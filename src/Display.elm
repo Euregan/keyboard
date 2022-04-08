@@ -66,7 +66,7 @@ init pcb seed =
                             Animation.startAfter
                                 pcbAnimation
                                 (Animation.init (Position.new 0 25 0) rotation)
-                                (delay + 200)
+                                (delay - 100)
                                 500
                                 position
                                 rotation
