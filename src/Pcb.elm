@@ -10,7 +10,11 @@ import Mesh exposing (Mesh)
 import Obj.Decode exposing (ObjCoordinates)
 import Position exposing (Position)
 import Rotation exposing (Rotation)
+import Scene3d.Material
+import Task
+import Texture exposing (Texture)
 import Vector3d exposing (Vector3d)
+import WebGL.Texture
 
 
 type Pcb
@@ -31,7 +35,8 @@ toString pcb =
 
 init : Pcbs
 init =
-    { corneClassic = Pending }
+    { corneClassic = Pending
+    }
 
 
 setMesh : Pcbs -> Pcb -> LoadState Mesh -> Pcbs
@@ -41,22 +46,40 @@ setMesh pcbs pcb newMesh =
             { pcbs | corneClassic = newMesh }
 
 
-load :
-    Pcb
-    -> Assets
-    ->
-        (Pcb
-         -> Result Http.Error Mesh
-         -> msg
-        )
-    -> Cmd msg
+load : Pcb -> Assets -> (Pcb -> Result String Mesh -> msg) -> Cmd msg
 load pcb assets msg =
     case pcb of
         CorneClassic ->
-            Http.get
-                { url = assets.pcbs.corneClassic.mesh
-                , expect = Obj.Decode.expectObj (msg pcb) Length.meters Mesh.decoder
-                }
+            Task.map2 (\meshResult t -> Result.map (\meshConstructor -> meshConstructor t) meshResult)
+                (Http.task
+                    { method = "GET"
+                    , headers = []
+                    , url = assets.pcbs.corneClassic.mesh
+                    , body = Http.emptyBody
+                    , resolver =
+                        Http.stringResolver
+                            (\response ->
+                                case response of
+                                    Http.GoodStatus_ _ body ->
+                                        Ok <| Obj.Decode.decodeString Length.meters Mesh.decoder body
+
+                                    _ ->
+                                        Err "oh no"
+                            )
+                    , timeout = Nothing
+                    }
+                )
+                (Scene3d.Material.load assets.pcbs.corneClassic.texture |> Task.mapError (\error -> "oh no"))
+                |> Task.andThen
+                    (\result ->
+                        case result of
+                            Ok completeMesh ->
+                                Task.succeed completeMesh
+
+                            Err error ->
+                                Task.fail error
+                    )
+                |> Task.attempt (msg pcb)
 
 
 mesh : Pcbs -> Pcb -> LoadState Mesh

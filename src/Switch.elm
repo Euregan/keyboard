@@ -2,11 +2,13 @@ module Switch exposing (..)
 
 import Assets exposing (Assets)
 import BoundingBox3d exposing (BoundingBox3d)
+import Color
 import Http
 import Length exposing (Meters)
 import LoadState exposing (LoadState(..))
 import Mesh exposing (Mesh)
 import Obj.Decode exposing (ObjCoordinates)
+import Scene3d.Material
 
 
 type Switch
@@ -37,21 +39,13 @@ setMesh switches switch newMesh =
             { switches | cherryMx = newMesh }
 
 
-load :
-    Switch
-    -> Assets
-    ->
-        (Switch
-         -> Result Http.Error Mesh
-         -> msg
-        )
-    -> Cmd msg
+load : Switch -> Assets -> (Switch -> Result Http.Error Mesh -> msg) -> Cmd msg
 load switch assets msg =
     case switch of
         CherryMx ->
             Http.get
                 { url = assets.switches.cherryMx
-                , expect = Obj.Decode.expectObj (msg switch) Length.meters Mesh.decoder
+                , expect = Obj.Decode.expectObj (msg switch) Length.meters (Obj.Decode.map (\constructor -> constructor (Scene3d.Material.constant Color.blue)) Mesh.decoder)
                 }
 
 

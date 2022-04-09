@@ -37,10 +37,11 @@ import Selector exposing (DisplayedSelection(..))
 import Sphere3d
 import Switch exposing (Switch(..), Switches)
 import Task
+import Texture exposing (Texture)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d
 import Viewpoint3d
-import WebGL.Texture exposing (Error(..))
+import WebGL.Texture
 
 
 type alias Model =
@@ -56,7 +57,7 @@ type alias Model =
 
 type Msg
     = Resize (Quantity Int Pixels) (Quantity Int Pixels)
-    | LoadedPcb Pcb (Result Http.Error Mesh)
+    | LoadedPcb Pcb (Result String Mesh)
     | LoadedSwitch Switch (Result Http.Error Mesh)
     | Tick Duration
 
@@ -101,10 +102,10 @@ init flags =
       , displayed = display
       , seed = seed
       }
-    , Cmd.batch
+    , Cmd.batch <|
         [ getViewport
-        , Pcb.load CorneClassic flags LoadedPcb
         , Switch.load CherryMx flags LoadedSwitch
+        , Pcb.load CorneClassic flags LoadedPcb
         ]
     )
 
@@ -155,8 +156,8 @@ update msg model =
             )
 
 
-areMeshesLoaded pcbs switches =
-    case ( pcbs.corneClassic, switches.cherryMx ) of
+areMeshesLoaded pcbMeshes switches =
+    case ( pcbMeshes.corneClassic, switches.cherryMx ) of
         ( Loaded _, Loaded _ ) ->
             True
 
