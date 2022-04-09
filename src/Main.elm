@@ -37,7 +37,7 @@ import Selector exposing (DisplayedSelection(..))
 import Sphere3d
 import Switch exposing (Switch(..), Switches)
 import Task
-import Texture exposing (Texture)
+import Texture exposing (Diffuse)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d
 import Viewpoint3d

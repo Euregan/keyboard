@@ -6,7 +6,8 @@ const app = Elm.Main.init({
     pcbs: {
       corneClassic: {
         mesh: new URL('../assets/corne-classic.obj', import.meta.url).toString(),
-        texture: new URL('../assets/corne-classic.png', import.meta.url).toString()
+        diffuse: new URL('../assets/corne-classic.png', import.meta.url).toString(),
+        metallic: new URL('../assets/corne-classic-metallic.png', import.meta.url).toString()
       }
     },
     switches: {

@@ -45,7 +45,17 @@ load switch assets msg =
         CherryMx ->
             Http.get
                 { url = assets.switches.cherryMx
-                , expect = Obj.Decode.expectObj (msg switch) Length.meters (Obj.Decode.map (\constructor -> constructor (Scene3d.Material.constant Color.blue)) Mesh.decoder)
+                , expect =
+                    Obj.Decode.expectObj (msg switch)
+                        Length.meters
+                        (Obj.Decode.map
+                            (\constructor ->
+                                constructor
+                                    (Scene3d.Material.constant Color.blue)
+                                    (Scene3d.Material.constant 0)
+                            )
+                            Mesh.decoder
+                        )
                 }
 
 

@@ -5,7 +5,8 @@ type alias Assets =
     { pcbs :
         { corneClassic :
             { mesh : String
-            , texture : String
+            , diffuse : String
+            , metallic : String
             }
         }
     , switches :

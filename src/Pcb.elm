@@ -12,7 +12,7 @@ import Position exposing (Position)
 import Rotation exposing (Rotation)
 import Scene3d.Material
 import Task
-import Texture exposing (Texture)
+import Texture exposing (Diffuse)
 import Vector3d exposing (Vector3d)
 import WebGL.Texture
 
@@ -50,7 +50,7 @@ load : Pcb -> Assets -> (Pcb -> Result String Mesh -> msg) -> Cmd msg
 load pcb assets msg =
     case pcb of
         CorneClassic ->
-            Task.map2 (\meshResult t -> Result.map (\meshConstructor -> meshConstructor t) meshResult)
+            Task.map3 (\meshResult diffuse metallic -> Result.map (\meshConstructor -> meshConstructor diffuse metallic) meshResult)
                 (Http.task
                     { method = "GET"
                     , headers = []
@@ -69,7 +69,8 @@ load pcb assets msg =
                     , timeout = Nothing
                     }
                 )
-                (Scene3d.Material.load assets.pcbs.corneClassic.texture |> Task.mapError (\error -> "oh no"))
+                (Scene3d.Material.load assets.pcbs.corneClassic.diffuse |> Task.mapError (\error -> "oh no"))
+                (Scene3d.Material.load assets.pcbs.corneClassic.metallic |> Task.mapError (\error -> "oh no"))
                 |> Task.andThen
                     (\result ->
                         case result of

@@ -13,7 +13,7 @@ import Quantity
 import Scene3d exposing (Entity)
 import Scene3d.Material
 import Scene3d.Mesh exposing (Textured)
-import Texture exposing (Texture)
+import Texture exposing (Diffuse, Metallic)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d
 
@@ -31,19 +31,19 @@ type alias Vertex =
     }
 
 
-decoder : Decoder (Texture -> Mesh)
+decoder : Decoder (Diffuse -> Metallic -> Mesh)
 decoder =
     Obj.Decode.map initMesh Obj.Decode.texturedFaces
 
 
-initMesh : TriangularMesh Vertex -> Texture -> Mesh
-initMesh triangularMesh texture =
+initMesh : TriangularMesh Vertex -> Diffuse -> Metallic -> Mesh
+initMesh triangularMesh diffuse metallic =
     let
         mesh =
             Scene3d.Mesh.texturedFaces triangularMesh
     in
     Mesh
-        (Scene3d.meshWithShadow (Scene3d.Material.texturedMatte texture) mesh (Scene3d.Mesh.shadow mesh))
+        (Scene3d.meshWithShadow (Scene3d.Material.texturedPbr { baseColor = diffuse, roughness = Scene3d.Material.constant 255, metallic = metallic }) mesh (Scene3d.Mesh.shadow mesh))
         (case List.map .position (Array.toList (TriangularMesh.vertices triangularMesh)) of
             first :: rest ->
                 BoundingBox3d.hull first rest

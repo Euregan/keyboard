@@ -8,6 +8,7 @@ import Camera3d exposing (Camera3d)
 import Color
 import Direction3d
 import Html exposing (Html)
+import Illuminance
 import Length exposing (Meters)
 import LoadState exposing (LoadState(..))
 import Mesh exposing (Mesh)
@@ -19,6 +20,7 @@ import Position
 import Quantity exposing (Quantity)
 import Random exposing (Seed)
 import Scene3d
+import Scene3d.Light
 import Scene3d.Material
 import Switch exposing (Switch)
 import Vector3d
@@ -193,13 +195,34 @@ view viewport pcb pcbResource switchResource displayed =
 
                 ( _, _ ) ->
                     [ tableMesh ]
-    in
-    Scene3d.sunny
-        { upDirection = Direction3d.z
-        , sunlightDirection = Direction3d.xyZ (Angle.degrees -135) (Angle.degrees -20)
 
-        -- , sunlightDirection = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -20)
-        , shadows = True
+        sun =
+            Scene3d.Light.directional (Scene3d.Light.castsShadows True)
+                { direction = Direction3d.xyZ (Angle.degrees -135) (Angle.degrees -20)
+                , intensity = Illuminance.lux 80000
+                , chromaticity = Scene3d.Light.sunlight
+                }
+
+        sky =
+            Scene3d.Light.overhead
+                { upDirection = Direction3d.z
+                , chromaticity = Scene3d.Light.skylight
+                , intensity = Illuminance.lux 20000
+                }
+
+        environment =
+            Scene3d.Light.overhead
+                { upDirection = Direction3d.reverse Direction3d.z
+                , chromaticity = Scene3d.Light.daylight
+                , intensity = Illuminance.lux 15000
+                }
+    in
+    Scene3d.custom
+        { lights = Scene3d.threeLights sun sky environment
+        , exposure = Scene3d.exposureValue 15
+        , toneMapping = Scene3d.noToneMapping
+        , whiteBalance = Scene3d.Light.daylight
+        , antialiasing = Scene3d.multisampling
         , camera = camera
         , dimensions = ( viewport.width, viewport.height )
         , background = Scene3d.transparentBackground
