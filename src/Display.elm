@@ -6,6 +6,7 @@ import Axis3d
 import BoundingBox3d
 import Camera3d exposing (Camera3d)
 import Color
+import DarkMode exposing (DarkMode)
 import Direction3d
 import Html exposing (Html)
 import Illuminance
@@ -110,17 +111,18 @@ update delta display =
                 }
 
 
-tableMesh =
+tableMesh : DarkMode -> Scene3d.Entity ObjCoordinates
+tableMesh darkMode =
     Scene3d.quadWithShadow
-        (Scene3d.Material.matte <| Color.rgb255 224 234 242)
+        (Scene3d.Material.matte <| DarkMode.color darkMode)
         (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters -1))
         (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters -1))
         (Point3d.xyz (Length.meters 1) (Length.centimeters -0.5) (Length.meters 1))
         (Point3d.xyz (Length.meters -1) (Length.centimeters -0.5) (Length.meters 1))
 
 
-view : Viewport -> Pcb -> LoadState Mesh -> LoadState Mesh -> Display -> Html msg
-view viewport pcb pcbResource switchResource displayed =
+view : DarkMode -> Viewport -> Pcb -> LoadState Mesh -> LoadState Mesh -> Display -> Html msg
+view darkMode viewport pcb pcbResource switchResource displayed =
     let
         distanceFromMesh pcbMesh =
             let
@@ -184,17 +186,17 @@ view viewport pcb pcbResource switchResource displayed =
         entities =
             case ( pcbResource, switchResource ) of
                 ( Loaded pcbMesh, Loaded switchMesh ) ->
-                    tableMesh
+                    tableMesh darkMode
                         :: placePcbMesh pcbMesh
                         :: placeSwitchMeshes switchMesh
 
                 ( Loaded pcbMesh, Pending ) ->
-                    [ tableMesh
+                    [ tableMesh darkMode
                     , placePcbMesh pcbMesh
                     ]
 
                 ( _, _ ) ->
-                    [ tableMesh ]
+                    [ tableMesh darkMode ]
 
         sun =
             Scene3d.Light.directional (Scene3d.Light.castsShadows True)

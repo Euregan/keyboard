@@ -12,6 +12,11 @@ const app = Elm.Main.init({
     },
     switches: {
       cherryMx: new URL('../assets/cherry-mx.obj', import.meta.url).toString()
-    }
+    },
+    darkMode: localStorage.getItem('darkMode') === 'true'
   }
+})
+
+app.ports.toggleDarkMode.subscribe(function (darkMode) {
+  localStorage.setItem('darkMode', darkMode)
 })

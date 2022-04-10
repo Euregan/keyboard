@@ -2,14 +2,20 @@ module Assets exposing (..)
 
 
 type alias Assets =
-    { pcbs :
-        { corneClassic :
-            { mesh : String
-            , diffuse : String
-            , metallic : String
-            }
+    { pcbs : PcbAssets
+    , switches : SwitchAssets
+    }
+
+
+type alias PcbAssets =
+    { corneClassic :
+        { mesh : String
+        , diffuse : String
+        , metallic : String
         }
-    , switches :
-        { cherryMx : String
-        }
+    }
+
+
+type alias SwitchAssets =
+    { cherryMx : String
     }

@@ -1,7 +1,7 @@
 module Pcb exposing (..)
 
 import Angle exposing (Angle)
-import Assets exposing (Assets)
+import Assets exposing (PcbAssets)
 import BoundingBox3d exposing (BoundingBox3d)
 import Http
 import Length exposing (Meters)
@@ -46,7 +46,7 @@ setMesh pcbs pcb newMesh =
             { pcbs | corneClassic = newMesh }
 
 
-load : Pcb -> Assets -> (Pcb -> Result String Mesh -> msg) -> Cmd msg
+load : Pcb -> PcbAssets -> (Pcb -> Result String Mesh -> msg) -> Cmd msg
 load pcb assets msg =
     case pcb of
         CorneClassic ->
@@ -54,7 +54,7 @@ load pcb assets msg =
                 (Http.task
                     { method = "GET"
                     , headers = []
-                    , url = assets.pcbs.corneClassic.mesh
+                    , url = assets.corneClassic.mesh
                     , body = Http.emptyBody
                     , resolver =
                         Http.stringResolver
@@ -69,8 +69,8 @@ load pcb assets msg =
                     , timeout = Nothing
                     }
                 )
-                (Scene3d.Material.load assets.pcbs.corneClassic.diffuse |> Task.mapError (\error -> "oh no"))
-                (Scene3d.Material.load assets.pcbs.corneClassic.metallic |> Task.mapError (\error -> "oh no"))
+                (Scene3d.Material.load assets.corneClassic.diffuse |> Task.mapError (\error -> "oh no"))
+                (Scene3d.Material.load assets.corneClassic.metallic |> Task.mapError (\error -> "oh no"))
                 |> Task.andThen
                     (\result ->
                         case result of

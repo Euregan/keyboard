@@ -1,6 +1,6 @@
 module Switch exposing (..)
 
-import Assets exposing (Assets)
+import Assets exposing (SwitchAssets)
 import BoundingBox3d exposing (BoundingBox3d)
 import Color
 import Http
@@ -39,12 +39,12 @@ setMesh switches switch newMesh =
             { switches | cherryMx = newMesh }
 
 
-load : Switch -> Assets -> (Switch -> Result Http.Error Mesh -> msg) -> Cmd msg
+load : Switch -> SwitchAssets -> (Switch -> Result Http.Error Mesh -> msg) -> Cmd msg
 load switch assets msg =
     case switch of
         CherryMx ->
             Http.get
-                { url = assets.switches.cherryMx
+                { url = assets.cherryMx
                 , expect =
                     Obj.Decode.expectObj (msg switch)
                         Length.meters

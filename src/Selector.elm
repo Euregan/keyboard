@@ -2,6 +2,7 @@ module Selector exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
 import Keyboard exposing (Keyboard(..))
 import Pcb exposing (Pcb(..))
 import Switch exposing (Switch(..))
@@ -43,8 +44,8 @@ card content =
         [ content ]
 
 
-view : DisplayedSelection -> Html msg
-view selection =
+view : DisplayedSelection -> msg -> Html msg
+view selection toggleDarkMode =
     let
         keyboard =
             selectedKeyboard selection
@@ -58,7 +59,8 @@ view selection =
         , Html.Attributes.style "gap" "1rem"
         , Html.Attributes.style "padding" "2rem"
         ]
-        [ card <| Html.text <| Keyboard.toString Corne
+        [ card <| Html.button [ Html.Events.onClick toggleDarkMode ] [ Html.text "Dark mode" ]
+        , card <| Html.text <| Keyboard.toString Corne
         , card <| Html.text <| Pcb.toString CorneClassic
         , card <| Html.text <| Switch.toString CherryMx
         ]

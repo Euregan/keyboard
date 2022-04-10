@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Angle exposing (Angle)
 import Animation exposing (State)
@@ -11,6 +11,7 @@ import Browser.Dom
 import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
+import DarkMode exposing (DarkMode)
 import Direction3d
 import Display exposing (Display(..), Viewport)
 import Duration exposing (Duration)
@@ -50,6 +51,7 @@ type alias Model =
     , pcbMeshes : Pcbs
     , switchMeshes : Switches
     , selected : DisplayedSelection
+    , darkMode : DarkMode
     , displayed : Display
     , seed : Seed
     }
@@ -60,9 +62,10 @@ type Msg
     | LoadedPcb Pcb (Result String Mesh)
     | LoadedSwitch Switch (Result Http.Error Mesh)
     | Tick Duration
+    | ToggleDarkMode
 
 
-main : Program Flags Model Msg
+main : Program (Flags Assets) Model Msg
 main =
     Browser.element
         { init = init
@@ -72,11 +75,11 @@ main =
         }
 
 
-type alias Flags =
-    Assets
+type alias Flags assets =
+    { assets | darkMode : Bool }
 
 
-init : Flags -> ( Model, Cmd Msg )
+init : Flags Assets -> ( Model, Cmd Msg )
 init flags =
     let
         getViewport =
@@ -95,31 +98,28 @@ init flags =
             { width = Quantity.zero
             , height = Quantity.zero
             }
-      , assets = flags
+      , assets = { pcbs = flags.pcbs, switches = flags.switches }
       , pcbMeshes = Pcb.init
       , switchMeshes = Switch.init
       , selected = SwitchSelected Corne CorneClassic CherryMx
       , displayed = display
       , seed = seed
+      , darkMode = DarkMode.fromBoolean flags.darkMode
       }
     , Cmd.batch <|
         [ getViewport
-        , Switch.load CherryMx flags LoadedSwitch
-        , Pcb.load CorneClassic flags LoadedPcb
+        , Switch.load CherryMx flags.switches LoadedSwitch
+        , Pcb.load CorneClassic flags.pcbs LoadedPcb
         ]
     )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if areMeshesLoaded model.pcbMeshes model.switchMeshes then
-        Sub.batch
-            [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
-            , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
-            ]
-
-    else
-        Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
+    Sub.batch
+        [ Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
+        , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -151,9 +151,20 @@ update msg model =
         Tick delta ->
             ( { model
                 | displayed = Display.update (Duration.inMilliseconds delta) model.displayed
+                , darkMode = DarkMode.tick (Duration.inMilliseconds delta) model.darkMode
               }
             , Cmd.none
             )
+
+        ToggleDarkMode ->
+            let
+                mode =
+                    DarkMode.toggle model.darkMode
+            in
+            ( { model | darkMode = mode }, toggleDarkMode <| DarkMode.toBoolean mode )
+
+
+port toggleDarkMode : Bool -> Cmd msg
 
 
 areMeshesLoaded pcbMeshes switches =
@@ -181,10 +192,11 @@ view model =
 
             SwitchSelected keyoard pcb switch ->
                 Display.view
+                    model.darkMode
                     model.viewport
                     pcb
                     (Pcb.mesh model.pcbMeshes pcb)
                     (Switch.mesh model.switchMeshes switch)
                     model.displayed
-        , Selector.view model.selected
+        , Selector.view model.selected ToggleDarkMode
         ]
