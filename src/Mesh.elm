@@ -43,7 +43,7 @@ initMesh triangularMesh diffuse metallic =
             Scene3d.Mesh.texturedFaces triangularMesh
     in
     Mesh
-        (Scene3d.meshWithShadow (Scene3d.Material.texturedPbr { baseColor = diffuse, roughness = Scene3d.Material.constant 255, metallic = metallic }) mesh (Scene3d.Mesh.shadow mesh))
+        (Scene3d.meshWithShadow (Scene3d.Material.texturedMatte diffuse) mesh (Scene3d.Mesh.shadow mesh))
         (case List.map .position (Array.toList (TriangularMesh.vertices triangularMesh)) of
             first :: rest ->
                 BoundingBox3d.hull first rest
