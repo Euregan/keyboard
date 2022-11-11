@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useLoader, useFrame } from '@react-three/fiber'
+import { useLoader, useGraph, useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
@@ -16,7 +16,7 @@ const PCB = ({ model }: Props) => {
   const [startTime, setStartTime] = useState(-Infinity)
 
   useFrame(({ clock }) => {
-    if (pcb && ref.current) {
+    if (pcbScene && ref.current) {
       const elapsed = clock.getElapsedTime() * 1000
       if (startTime === -Infinity) {
         setStartTime(elapsed)
@@ -27,16 +27,20 @@ const PCB = ({ model }: Props) => {
     }
   })
 
-  const pcb = useLoader(OBJLoader, `/${model}`)
+  const pcbScene = useLoader(OBJLoader, `/${model}`)
+  const { nodes } = useGraph(pcbScene)
 
   return (
-    <primitive
-      ref={ref}
-      object={pcb}
+    <mesh
+      castShadow
+      receiveShadow
+      geometry={nodes['Manual_PCB_Plane.003'].geometry}
       scale={100}
-      position={[0, 10, 0]}
-      rotation={[0, Math.PI * 1.5, 0]}
-    />
+      position={[0, 0, 0]}
+      rotation={[0, 0, 0]}
+    >
+      <meshStandardMaterial color={'white'} />
+    </mesh>
   )
 }
 

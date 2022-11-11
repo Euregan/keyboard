@@ -22,7 +22,7 @@ const Switch = ({
   const [startTime, setStartTime] = useState(-Infinity)
 
   useFrame(({ clock }) => {
-    if (pcb && ref.current) {
+    if (switchScene && ref.current) {
       const elapsed = clock.getElapsedTime() * 1000
       if (startTime === -Infinity) {
         setStartTime(elapsed)
@@ -34,8 +34,8 @@ const Switch = ({
     }
   })
 
-  const pcb = useLoader(OBJLoader, `/${model}`)
-  const { nodes, materials } = useGraph(pcb)
+  const switchScene = useLoader(OBJLoader, `/${model}`)
+  const { nodes, materials } = useGraph(switchScene)
 
   // console.log(nodes.base_Solid001.geometry)
 
@@ -52,15 +52,19 @@ const Switch = ({
 
   return (
     <>
-      <mesh
+      {/*<mesh
+        castShadow
+        receiveShadow
         geometry={nodes.cap_Solid.geometry}
         scale={100}
         position={[positionX, positionY, positionZ]}
         rotation={[rotationX, rotationY, rotationZ]}
       >
         <meshStandardMaterial color={'orange'} />
-      </mesh>
+      </mesh>*/}
       <mesh
+        castShadow
+        receiveShadow
         geometry={nodes.base_Solid001.geometry}
         scale={100}
         position={[positionX, positionY, positionZ]}
@@ -69,6 +73,8 @@ const Switch = ({
         <meshStandardMaterial color={'orange'} />
       </mesh>
       <mesh
+        castShadow
+        receiveShadow
         geometry={nodes.button_Solid008.geometry}
         scale={100}
         position={[positionX, positionY, positionZ]}
@@ -78,16 +84,6 @@ const Switch = ({
       </mesh>
     </>
   )
-
-  // return (
-  //   <primitive
-  //     ref={ref}
-  //     object={pcb}
-  //     scale={100}
-  //     position={[positionX, ref?.current?.position.y || 10, positionZ]}
-  //     rotation={[rotationX, rotationY, rotationZ]}
-  //   />
-  // )
 }
 
 export default Switch

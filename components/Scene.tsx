@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
+import { Plane } from '@react-three/drei'
+import { PerspectiveCamera, Vector3 } from 'three'
 import PCBModel from './PCB'
 import Switch from './Switch'
 import keyboards from '../keyboards'
@@ -44,10 +45,24 @@ const Scene = ({ width, height }: Props) => {
   camera.lookAt(new Vector3(0, 0, 0))
 
   return (
-    <Canvas camera={camera}>
-      <ambientLight intensity={0.1} color={sunColor} />
-      <pointLight position={[10, 10, 2]} color={sunColor} intensity={0.5} />
+    <Canvas camera={camera} shadows>
+      <ambientLight intensity={0.5} color={sunColor} />
+      <directionalLight
+        castShadow
+        shadow-mapSize-height={2048}
+        shadow-mapSize-width={2048}
+        position={[-10, 10, 5]}
+        color={sunColor}
+        intensity={0.8}
+      />
+      <directionalLight
+        position={[10, -10, 5]}
+        color={sunColor}
+        intensity={0.1}
+      />
+
       {pcb && <PCBModel model={pcb.model} />}
+
       {switchLayout &&
         switchLayout.layout.map(({ position, rotation }, index) => (
           <Switch
@@ -57,6 +72,11 @@ const Scene = ({ width, height }: Props) => {
             rotation={rotation}
           />
         ))}
+
+      <mesh receiveShadow position={[0, -0.5, 0]}>
+        <boxGeometry args={[20, 1, 50]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
     </Canvas>
   )
 }
