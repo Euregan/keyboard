@@ -7,7 +7,11 @@ const easeOut = (x: number): number => Math.sin((x * Math.PI) / 2)
 
 const animationDuration = 200
 
-const PCB = () => {
+interface Props {
+  model: string
+}
+
+const PCB = ({ model }: Props) => {
   const ref = useRef<Group | null>(null)
   const [startTime, setStartTime] = useState(-Infinity)
 
@@ -23,7 +27,7 @@ const PCB = () => {
     }
   })
 
-  const pcb = useLoader(OBJLoader, '/corne-classic.obj')
+  const pcb = useLoader(OBJLoader, `/${model}`)
 
   return (
     <primitive
