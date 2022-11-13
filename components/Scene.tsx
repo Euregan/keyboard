@@ -75,7 +75,7 @@ const Scene = ({ width, height }: Props) => {
 
       <mesh receiveShadow position={[0, -0.5, 0]}>
         <boxGeometry args={[20, 1, 50]} />
-        <meshStandardMaterial color="white" />
+        <meshStandardMaterial color="white" roughness={0.55} />
       </mesh>
     </Canvas>
   )

@@ -37,9 +37,9 @@ const PCB = ({ model }: Props) => {
       geometry={nodes['Manual_PCB_Plane.003'].geometry}
       scale={100}
       position={[0, 0, 0]}
-      rotation={[0, 0, 0]}
+      rotation={[0, Math.PI * 1.5, 0]}
     >
-      <meshStandardMaterial color={'white'} />
+      <meshStandardMaterial color={0} roughness={0.55} />
     </mesh>
   )
 }

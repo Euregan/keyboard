@@ -70,7 +70,7 @@ const Switch = ({
         position={[positionX, positionY, positionZ]}
         rotation={[rotationX, rotationY, rotationZ]}
       >
-        <meshStandardMaterial color={'orange'} />
+        <meshStandardMaterial color={0} roughness={0.55} />
       </mesh>
       <mesh
         castShadow
@@ -80,7 +80,7 @@ const Switch = ({
         position={[positionX, positionY, positionZ]}
         rotation={[rotationX, rotationY, rotationZ]}
       >
-        <meshStandardMaterial color={'orange'} />
+        <meshStandardMaterial color={0x583830} roughness={0.55} />
       </mesh>
     </>
   )
