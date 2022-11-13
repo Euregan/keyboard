@@ -1,25 +1,51 @@
-import { useMemo, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useLoader, useGraph, useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { useKeyPressed } from '../libs/hooks'
+import { Text } from '@react-three/drei'
+import { useSpring, animated } from '@react-spring/three'
 
 const easeOut = (x: number): number => Math.sin((x * Math.PI) / 2)
 
 const animationDuration = 200
 
+const keyToLabel = (key: string) => {
+  switch (key) {
+    case 'Shift':
+      return 'Shift'
+    case 'Control':
+      return 'Ctrl'
+    case 'Tab':
+      return 'Tab'
+    default:
+      return key.toUpperCase()
+  }
+}
+
 interface Props {
   model: string
+  character: string
   position: [number, number, number]
   rotation: [number, number, number]
 }
 
 const Switch = ({
   model,
+  character: key,
   position: [positionX, positionY, positionZ],
   rotation: [rotationX, rotationY, rotationZ],
 }: Props) => {
   const ref = useRef<Group | null>(null)
   const [startTime, setStartTime] = useState(-Infinity)
+
+  const pressed = useKeyPressed(key)
+  const { buttonPosition } = useSpring({
+    buttonPosition: [positionX, positionY - (pressed ? 0.25 : 0), positionZ],
+    config: {
+      duration: 30,
+    },
+  })
 
   useFrame(({ clock }) => {
     if (switchScene && ref.current) {
@@ -35,20 +61,7 @@ const Switch = ({
   })
 
   const switchScene = useLoader(OBJLoader, `/${model}`)
-  const { nodes, materials } = useGraph(switchScene)
-
-  // console.log(nodes.base_Solid001.geometry)
-
-  // const clonedPcb = useMemo(() => pcb.clone(true), [pcb])
-
-  // return (
-  //   <primitive
-  //     object={clonedPcb}
-  //     scale={100}
-  //     position={[0, 0, 0]}
-  //     rotation={[0, 0, 0]}
-  //   />
-  // )
+  const { nodes } = useGraph(switchScene)
 
   return (
     <>
@@ -72,16 +85,28 @@ const Switch = ({
       >
         <meshStandardMaterial color={0} roughness={0.55} />
       </mesh>
-      <mesh
+      <animated.mesh
         castShadow
         receiveShadow
         geometry={nodes.button_Solid008.geometry}
         scale={100}
-        position={[positionX, positionY, positionZ]}
+        position={buttonPosition}
         rotation={[rotationX, rotationY, rotationZ]}
       >
         <meshStandardMaterial color={0x583830} roughness={0.55} />
-      </mesh>
+      </animated.mesh>
+      <Text
+        position={[
+          positionX,
+          positionY + 0.7 - (pressed ? 0.25 : 0),
+          positionZ,
+        ]}
+        rotation={[rotationX + Math.PI * 1.5, 0, rotationZ + Math.PI * 0.5]}
+        fontSize={0.8}
+        color="orange"
+      >
+        {keyToLabel(key)}
+      </Text>
     </>
   )
 }

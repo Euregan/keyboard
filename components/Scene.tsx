@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Plane } from '@react-three/drei'
 import { PerspectiveCamera, Vector3 } from 'three'
 import PCBModel from './PCB'
 import Switch from './Switch'
@@ -41,7 +40,7 @@ const Scene = ({ width, height }: Props) => {
   // camera.position.set(0, -20, 0)
   // camera.lookAt(new Vector3(0, 0, 0))
   const camera = new PerspectiveCamera(45, width / height, 1, 1000)
-  camera.position.set(15, 7, 0)
+  camera.position.set(16, 16, 0)
   camera.lookAt(new Vector3(0, 0, 0))
 
   return (
@@ -64,9 +63,10 @@ const Scene = ({ width, height }: Props) => {
       {pcb && <PCBModel model={pcb.model} />}
 
       {switchLayout &&
-        switchLayout.layout.map(({ position, rotation }, index) => (
+        switchLayout.layout.map(({ position, rotation, key }, index) => (
           <Switch
             key={index}
+            character={key}
             model={switchLayout.model}
             position={position}
             rotation={rotation}
