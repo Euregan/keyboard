@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useLoader, useGraph, useFrame } from '@react-three/fiber'
-import type { Group } from 'three'
+import type { Group, Mesh, Vector3 } from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { useKeyPressed } from '../libs/hooks'
 import { Text } from '@react-three/drei'
@@ -78,7 +78,7 @@ const Switch = ({
       <mesh
         castShadow
         receiveShadow
-        geometry={nodes.base_Solid001.geometry}
+        geometry={(nodes.base_Solid001 as Mesh).geometry}
         scale={100}
         position={[positionX, positionY, positionZ]}
         rotation={[rotationX, rotationY, rotationZ]}
@@ -88,9 +88,9 @@ const Switch = ({
       <animated.mesh
         castShadow
         receiveShadow
-        geometry={nodes.button_Solid008.geometry}
+        geometry={(nodes.button_Solid008 as Mesh).geometry}
         scale={100}
-        position={buttonPosition}
+        position={(buttonPosition as unknown) as Vector3}
         rotation={[rotationX, rotationY, rotationZ]}
       >
         <meshStandardMaterial color={0x583830} roughness={0.55} />

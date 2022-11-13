@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useLoader, useGraph, useFrame } from '@react-three/fiber'
-import type { Group } from 'three'
+import type { Group, Mesh } from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
 const easeOut = (x: number): number => Math.sin((x * Math.PI) / 2)
@@ -34,7 +34,7 @@ const PCB = ({ model }: Props) => {
     <mesh
       castShadow
       receiveShadow
-      geometry={nodes['Manual_PCB_Plane.003'].geometry}
+      geometry={(nodes['Manual_PCB_Plane.003'] as Mesh).geometry}
       scale={100}
       position={[0, 0, 0]}
       rotation={[0, Math.PI * 1.5, 0]}
